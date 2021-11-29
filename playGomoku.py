@@ -14,22 +14,37 @@ class Gomoku:
         rows=15,
         cols=15,
         nToWin=5,
-        pieceSize=20
+        pieceSize=40
     ):
-
+        
         self.unit = unit
         self.halfUnit = unit // 2
         self.rows = rows
         self.cols = cols
         self.nToWin = nToWin
         self.width = cols * unit
+        self.borderWidth = self.width+20
         self.height = rows * unit
-        self.pieceSize = 20
+        self.borderHeight = self.height+20
+        self.pieceSize = 15
         pygame.init()
         pygame.display.set_caption("Gomoku")
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.screen = pygame.display.set_mode((self.borderWidth, self.borderHeight))
+        self.font = pygame.font.Font(None, 24)
         self.screen.fill(Colors.WHITE)
         self.gomokuServer = GomokuServer(rows=rows, cols=cols, nToWin=nToWin)
+
+    def drawLabels(self):
+        #draw rows
+        for i in range(self.rows):
+            text_surface = self.font.render(str(i), True, Colors.WHITE)
+            rect = text_surface.get_rect(center=(i*self.unit+self.halfUnit,self.height-5))
+            self.screen.blit(text_surface,rect)
+        #draw cols
+        for j in range(self.cols):
+            text_surface = self.font.render(str(j), True, Colors.WHITE)
+            rect = text_surface.get_rect(center=(self.width-5,j*self.unit+self.halfUnit))
+            self.screen.blit(text_surface,rect)
 
     def drawRowLines(self):
         for y in range(self.halfUnit, self.height, self.unit):
@@ -45,12 +60,13 @@ class Gomoku:
             pygame.draw.line(self.screen, Colors.BLACK, start, end, width=2)
 
     def drawBackground(self):
-        rect = pygame.Rect(0, 0, self.width, self.height)
+        rect = pygame.Rect(0, 0, self.borderWidth, self.borderHeight)
         pygame.draw.rect(self.screen, Colors.BROWN, rect)
 
     def drawBoard(self):
         self.drawBackground()
         self.drawLines()
+        self.drawLabels()
 
     def drawPiece(self, row, col):
         pieceX = col * self.unit + self.halfUnit
@@ -103,8 +119,9 @@ class Gomoku:
         self.exitOnClick()
 
 if __name__ == "__main__":
-    game = Gomoku(rows=5, cols=5, nToWin=3)
+    game = Gomoku(rows=10, cols=10, nToWin=5)
     game.play()
+
 
 
 

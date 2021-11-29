@@ -7,7 +7,6 @@ import speech_recognition as sr
 from record import RecordAudio
 import globalParamters as gp
 
-
 def recognize( audio ):
     # Initialize object instances
     rec = sr.Recognizer()

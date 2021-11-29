@@ -1,11 +1,12 @@
 # Global Python libraries
 import time
+import os
 import speech_recognition as sr
 
 # Local Python modules
 from record import RecordAudio
+import globalParamters as gp
 
-class
 
 def recognize( audio ):
     # Initialize object instances
@@ -39,14 +40,16 @@ def getResult(mic):
     return result
 
 def main():
+    FIFO_PATH = gp.FIFO_NAME
     # Initialize objects for recognition
     mic = RecordAudio()
     while True:
-        # Record and try recognizing voice command until any words detected
-        print("[main] Please speak a command")
-        command = getResult(mic)
-        if command:
-            print("[main] Result: " + command)
+        # Record and try recognizing voice userInput until any words detected
+        print("Tell me the position of your piece, format:[number-number]")
+        userInput = getResult(mic)
+        if userInput:
+            # send userInput to fifo
+            os.system(f'echo "{userInput}" > {FIFO_PATH}')
         else: 
             print("[main] Result: None")
 

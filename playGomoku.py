@@ -1,6 +1,8 @@
 from itertools import chain
 import pygame
 from GomokuServer import GomokuServer
+from InputHandler import InputHandler
+import globalParamters as gp
 
 class Colors:
     BLACK = 0, 0, 0
@@ -34,6 +36,7 @@ class Gomoku:
         self.font = pygame.font.SysFont('arial', self.fontSize)
         self.screen.fill(Colors.WHITE)
         self.gomokuServer = GomokuServer(rows=rows, cols=cols, nToWin=nToWin)
+        self.inputHandler = InputHandler(rows, cols)
 
     def drawLabels(self):
         #draw rows
@@ -102,12 +105,10 @@ class Gomoku:
                     pygame.quit()
                     return
 
-    def makeMove(self, x, y):
-        row = y // self.unit
-        col = x // self.unit
+    def makeMove(self, row, col):
         if self.gomokuServer.move(row, col):
             self.drawPiece(row, col)
-        
+
     def play(self):
         # set framerate
         pygame.time.Clock().tick(10)
@@ -115,11 +116,11 @@ class Gomoku:
         pygame.display.flip()
 
         while not self.gomokuServer.gameOver() and not self.gomokuServer.isDraw():
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.makeMove(*event.pos)
-                    pygame.display.flip()
-            self.hintMsg('lol')
+            # capture speech events, this part can be extracted as/in a class
+            userRow, userCol = self.inputHandler.getCommand()
+            self.makeMove(userRow, userCol)
+            pygame.display.flip()
+            
         self.showOutcome()
         pygame.display.flip()
         self.exitOnClick()

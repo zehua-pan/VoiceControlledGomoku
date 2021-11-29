@@ -18,6 +18,7 @@ class Gomoku:
     ):
         
         self.unit = unit
+        self.fontSize = 20
         self.halfUnit = unit // 2
         self.rows = rows
         self.cols = cols
@@ -25,12 +26,12 @@ class Gomoku:
         self.width = cols * unit
         self.borderWidth = self.width+20
         self.height = rows * unit
-        self.borderHeight = self.height+20
+        self.borderHeight = self.height+40
         self.pieceSize = 15
         pygame.init()
         pygame.display.set_caption("Gomoku")
         self.screen = pygame.display.set_mode((self.borderWidth, self.borderHeight))
-        self.font = pygame.font.Font(None, 24)
+        self.font = pygame.font.SysFont('arial', self.fontSize)
         self.screen.fill(Colors.WHITE)
         self.gomokuServer = GomokuServer(rows=rows, cols=cols, nToWin=nToWin)
 
@@ -44,6 +45,11 @@ class Gomoku:
         for j in range(self.cols):
             text_surface = self.font.render(str(j), True, Colors.WHITE)
             rect = text_surface.get_rect(center=(self.width-5,j*self.unit+self.halfUnit))
+            self.screen.blit(text_surface,rect)
+
+    def hintMsg(self,msg):
+            text_surface = self.font.render(msg, True, Colors.WHITE)
+            rect = text_surface.get_rect(center=(self.width//2,self.height+20))
             self.screen.blit(text_surface,rect)
 
     def drawRowLines(self):
@@ -113,7 +119,7 @@ class Gomoku:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.makeMove(*event.pos)
                     pygame.display.flip()
-
+            self.hintMsg('lol')
         self.showOutcome()
         pygame.display.flip()
         self.exitOnClick()

@@ -1,2 +1,3 @@
 
 FIFO_NAME = "myFIFO"
+FIFO_LED = 'FIFOLED'

@@ -3,6 +3,7 @@ import pygame
 from GomokuServer import GomokuServer
 from InputHandler import InputHandler
 import globalParamters as gp
+import os
 
 class Colors:
     BLACK = 0, 0, 0
@@ -18,7 +19,12 @@ class Gomoku:
         nToWin=5,
         pieceSize=40
     ):
-        
+        #white peice starts first
+        self.colors = {
+                0: 'White',
+                1: 'Black'
+            }
+        self.currentColor = 0
         self.unit = unit
         self.fontSize = 20
         self.halfUnit = unit // 2
@@ -30,6 +36,8 @@ class Gomoku:
         self.height = rows * unit
         self.borderHeight = self.height+40
         self.pieceSize = 15
+        self.lineWidth = 2
+        self.gameMsg = 'Please play the game use your voice'
         pygame.init()
         pygame.display.set_caption("Gomoku")
         self.screen = pygame.display.set_mode((self.borderWidth, self.borderHeight))
@@ -51,9 +59,10 @@ class Gomoku:
             self.screen.blit(text_surface,rect)
 
     def hintMsg(self,msg):
-            text_surface = self.font.render(msg, True, Colors.WHITE)
-            rect = text_surface.get_rect(center=(self.width//2,self.height+20))
-            self.screen.blit(text_surface,rect)
+        text_surface = self.font.render(msg, True, Colors.WHITE)
+        rect = text_surface.get_rect(center=(self.width//2,self.height+20))
+        pygame.draw.rect(self.screen, Colors.BROWN, pygame.Rect(0,self.height+5,self.width,self.height))
+        self.screen.blit(text_surface,rect)
 
     def drawRowLines(self):
         for y in range(self.halfUnit, self.height, self.unit):
@@ -66,7 +75,7 @@ class Gomoku:
     def drawLines(self):
         allLines = chain(self.drawRowLines(), self.drawColLines())
         for start, end in allLines:
-            pygame.draw.line(self.screen, Colors.BLACK, start, end, width=2)
+            pygame.draw.line(self.screen, Colors.BLACK, start, end, self.lineWidth)
 
     def drawBackground(self):
         rect = pygame.Rect(0, 0, self.borderWidth, self.borderHeight)
@@ -76,15 +85,25 @@ class Gomoku:
         self.drawBackground()
         self.drawLines()
         self.drawLabels()
+        self.hintMsg(self.gameMsg)
+        self.switchLEDColors()
 
     def drawPiece(self, row, col):
         pieceX = col * self.unit + self.halfUnit
         pieceY = row * self.unit + self.halfUnit
         if self.gomokuServer.lastPlayer() == 'w':
             color = Colors.WHITE
+            self.currentColor = 1
         else:
             color = Colors.BLACK
+            self.currentColor = 0
+        self.switchLEDColors()
         pygame.draw.circle(self.screen, color, (pieceX, pieceY), self.pieceSize)
+        
+    def switchLEDColors(self):
+        FIFO_PATH = gp.FIFO_LED
+        userColor = self.colors[self.currentColor]
+        os.system(f'echo "{userColor}" > {FIFO_PATH}')
 
     def showOutcome(self):
         playerNames = {"w":"White", "b":"Black"}
@@ -114,19 +133,26 @@ class Gomoku:
         pygame.time.Clock().tick(10)
         self.drawBoard()
         pygame.display.flip()
+        newMsg = ''
 
         while not self.gomokuServer.gameOver() and not self.gomokuServer.isDraw():
             # capture speech events, this part can be extracted as/in a class
-            userRow, userCol = self.inputHandler.getCommand()
-            self.makeMove(userRow, userCol)
+            isValid, userRow, userCol, newMsg = self.inputHandler.getCommand()
+            newMsg = newMsg.lower()
+            if(newMsg == 'exit'): pygame.quit()
+    
+            if(isValid):
+                self.makeMove(userRow, userCol)
+            self.hintMsg(newMsg.capitalize())
             pygame.display.flip()
+            
             
         self.showOutcome()
         pygame.display.flip()
         self.exitOnClick()
 
 if __name__ == "__main__":
-    game = Gomoku(rows=10, cols=10, nToWin=5)
+    game = Gomoku(rows=14, cols=14, nToWin=5)
     game.play()
 
 

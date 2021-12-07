@@ -7,37 +7,43 @@ class InputHandler:
         self.rows = rows
         self.cols = cols
         self.msg = ''
-        self.commandMap = {
-            'exit': 'exit',
-            'exit game': 'exit',
-            'quit': 'exit',
-            'quit game': 'exit',
-            'quite': 'exit',
-            'quite game': 'exit',
-            'play again': 'again',
-            'again': 'again',
-        }
+        self.operatorList = ["-", "*", "+", "/", "|", "="]
+        self.cmdList = []
 
     def inBounds(self, row, col):
         return row >=0 and row < self.rows and col >= 0 and col < self.cols
 
     def getCoordinate(self, command):
-        comList = command.split("-")
-        return int(comList[0]), int(comList[1])
+        return int(self.comList[0]), int(self.comList[1])
+
+    def commandParse(self, command):
+        cmdList = []
+        index = 0
+        while len(cmdList) < 2 and index < len(self.operatorList):
+            cmdList = command.split(self.operatorList[index])
+            index += 1
+        for i in range(len(cmdList)):
+            cmdList[i] = cmdList[i].strip()
+        for i in range(len(cmdList)):
+            if(cmdList[i] == ""): cmdList.pop(i)
+        return cmdList
 
     def checkCommand(self, command):
-        if(command in self.commandMap):
-            self.msg = self.commandMap[command]
+        # handle special command, if yes, return directly
+        if(command in gp.commandMap):
+            self.msg = gp.commandMap[command]
             return False
-        comList = command.split("-")
-        if(len(comList) != 2): 
+        self.comList = self.commandParse(command)
+
+        # handle normal user inputs
+        if(len(self.comList) != 2): 
             self.msg = "Try again : You need to command with [number]-[number]"
             return False
-        if(not comList[0].isdigit() or not comList[1].isdigit()): 
+        if(not self.comList[0].isdigit() or not self.comList[1].isdigit()): 
             self.msg = "Try again : You need to command with [number]-[number]"
             return False
-        row = int(comList[0])
-        col = int(comList[1])
+        row = int(self.comList[0])
+        col = int(self.comList[1])
         if(not self.inBounds(row, col)): 
             print("Try again : The input integers are out of bound")
             self.msg = "Try again : The input integers are out of bound"
@@ -45,40 +51,33 @@ class InputHandler:
         self.msg = "Success : you made a move at {}-{}".format(row,col)
         print(self.msg)
         return True
-    
-    def getLED(self):
-        command=""
+
+    def handleFIFO(self, fifo_name):
+        command = ""
         try:
-            os.mkfifo(gp.FIFO_LED)
+            os.mkfifo(fifo_name)
         except OSError as oe:
             if oe.errno != errno.EEXIST:
                 raise
         # get command from fifo
-        with open(gp.FIFO_LED) as fifo:
+        with open(fifo_name) as fifo:
             command = fifo.read()
-        if command[-1] == "\n" : command = command[:-1]
+        if command != "" and command[-1] == "\n" : command = command[:-1]
+        print(f"get command from {fifo_name}, command : {command}")
         return command
 
+    def getLED(self):
+        return self.handleFIFO(gp.FIFO_LED)
+
     def getCommand(self):
-        command = ""
         userRow, userCol = "", ""
         isValid = False
         # create FIFO, ignore if exist
-        try: 
-            os.mkfifo(gp.FIFO_NAME)
-        except OSError as oe:
-            if oe.errno != errno.EEXIST:
-                raise
   
-        # get command from fifo
-        with open(gp.FIFO_NAME) as fifo:
-            command = fifo.read()
-        # remove the carriage return brought by file
-        if command[-1] == "\n" : command = command[:-1]
+        command = self.handleFIFO(gp.FIFO_USERIN)
         if(self.checkCommand(command)):
             isValid = True
             userRow, userCol = self.getCoordinate(command)
-            
 
-        return isValid, userRow, userCol, self.msg
+        return isValid, userRow, userCol, self.msg.lower()
 

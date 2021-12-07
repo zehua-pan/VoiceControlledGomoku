@@ -10,10 +10,13 @@ from InputHandler import InputHandler
 from record import RecordAudio
 import globalParamters as gp
 
+# quit btn
+QUIT_BTN = 27
+
 # LED Indicator pin
-#red LED - white peice
+#red LED - white peice 
 LED_PIN_WHITE = 13
-#green LED - black peice
+#green LED - black peice 
 LED_PIN_BLACK = 17
 LED_map = {
     'White': LED_PIN_WHITE,
@@ -21,12 +24,35 @@ LED_map = {
     }
 inputHandler = InputHandler('','')
 
+########################################
+# special events handling 
+########################################
+
+
 # close LED when program exit
 def catchHandler(signum,frame):
     gpio.cleanup()
     print("gpio cleaned")
     exit(1)
 
+# physical callback function for exit
+def GPIO27_callback(channel):
+    gpio.cleanup()
+    print('gpio cleaned')
+    os.system(f'echo "exit" > {gp.FIFO_USERIN}')
+    exit(1)
+
+def gpioSetUp():
+    # Set up indicator LED
+    gpio.setmode(gpio.BCM)
+    gpio.setup(LED_PIN_WHITE, gpio.OUT)
+    gpio.setup(LED_PIN_BLACK, gpio.OUT)
+    gpio.setup(QUIT_BTN, gpio.IN, pull_up_down=gpio.PUD_UP)
+    gpio.add_event_detect(27,gpio.FALLING,callback=GPIO27_callback,bouncetime=500)
+
+########################################
+# speech recognition progress handling 
+########################################
 
 def recognize( audio ):
     # Initialize object instances
@@ -42,17 +68,17 @@ def recognize( audio ):
         # Return None if no response
         try:
             res = rec.recognize_google(audio)
-            print('[speech] Found: ' + res)
+            print('Found: ' + res)
             return res
         except:
-            print('[speech] Not found')
-            return None
+            print('Not found')
+            return 'not found'
 
 def getResult(mic,color='White'):
-    if(not color):
+    if(color not in LED_map):
         color = 'White'
     result  = ""
-    print("[main] Recognizing...")
+    print("Recognizing...")
     # Indicate start of recording with LED and animation    
     gpio.output(LED_map[color], 1)
     # Record audio 
@@ -66,27 +92,28 @@ def getResult(mic,color='White'):
     return result
 
 def main():
-    
+    # set up gpio 
+    gpioSetUp()
     # catch error
     signal.signal(signal.SIGINT, catchHandler)
 
-    FIFO_PATH = gp.FIFO_NAME
+    FIFO_PATH = gp.FIFO_USERIN
     # Initialize objects for recognition
     mic = RecordAudio()
-    # Set up indicator LED
-    gpio.setmode(gpio.BCM)
-    gpio.setup(LED_PIN_WHITE, gpio.OUT)
-    gpio.setup(LED_PIN_BLACK, gpio.OUT)
     while True:
         LED_color = inputHandler.getLED()
+        print(f"Current LED color: {LED_color}")
         # Record and try recognizing voice userInput until any words detected
         print("Tell me the position of your piece, format:[number-number]")
         userInput = getResult(mic,LED_color)
         if userInput:
             # send userInput to fifo
             os.system(f'echo "{userInput}" > {FIFO_PATH}')
+            if(userInput in gp.commandMap and gp.commandMap[userInput] == 'exit'):
+                exit(1)
         else: 
-            print("[main] Result: None")
+            print("Result: None")
+        #  time.sleep(0.1)
 
 if __name__ == "__main__":
     main()

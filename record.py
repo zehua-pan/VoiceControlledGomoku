@@ -9,12 +9,15 @@ Zehua Pan(zp74) and Yuhao Lu(yl3539)
 
 import pyaudio
 import wave
+import sys
+
+CUR_FILE = __file__.split("/")[-1]
 
 """ 
 Class to encapsulate audio recording
 """
 class RecordAudio:
-    def __init__(s, timeForRecording=3):
+    def __init__(s, timeForRecording=4):
         s.sampleRate = 44100 # Sampling rate
         s.sampleFormat = pyaudio.paInt16
         s.chunk = 1024  # One chunk has 1024 samples
@@ -28,7 +31,7 @@ class RecordAudio:
     record s.seconds long audio and save it in s.frames
     """
     def record(s):
-        print('Recording')
+        print(f'[{CUR_FILE}] Recording')
         # Initialize the stream object from PyAudio
         stream = s.paudio.open(format=s.sampleFormat,
                 channels=s.channels,
@@ -47,7 +50,7 @@ class RecordAudio:
         stream.stop_stream()
         stream.close()
 
-        print('Finished recording')
+        print(f'[{CUR_FILE}] Finished recording')
 
     """ 
     save the collected samples to s.filename

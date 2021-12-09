@@ -1,19 +1,33 @@
 from itertools import chain
+import sys
+import math
 import pygame
 from GomokuServer import GomokuServer
 from InputHandler import InputHandler
 import globalParamters as gp
 import os
-
+import RPi.GPIO as gpio
 # piTFT env
 os.putenv('SDL_VIDEORIVER', 'fbcon')
 os.putenv('SDL_FBDEV', '/dev/fb1')
+CUR_FILE = sys.argv[0].split("/")[-1]
+QUIT_BTN = 23
+
+def GPIO23_callback(channel):
+    gpio.cleanup()
+    exit(1)
+
+def gpioSetUp():
+    gpio.setmode(gpio.BCM)
+    gpio.setup(QUIT_BTN, gpio.IN, pull_up_down=gpio.PUD_UP)
+    gpio.add_event_detect(QUIT_BTN,gpio.FALLING,callback=GPIO23_callback,bouncetime=500)
+
 
 class Colors:
     BLACK = 0, 0, 0
     WHITE = 255, 255, 255
     BROWN = 205, 128, 0
-    RED   = 100, 255, 100
+    RED   = 81, 24, 111
 
 class Gomoku:
     def __init__(
@@ -27,27 +41,25 @@ class Gomoku:
     ):
         self.ratio = 1
         self.unit = unit
-        # piTFT screen size
-        self.screenWidth = 320
-        self.screenHeight = 240
-        # convert unit to fit piTFT
-        if(onTFT): convertDisplayScale(onTFT)
-        
         # parameters for Gomoku GUI
-        self.fontSize = self.ratio*20
+        self.fontSize = 5
         self.halfUnit = self.unit // 2
         self.rows = rows
         self.cols = cols
         self.nToWin = nToWin
         self.width = cols * self.unit
-        self.borderWidth = self.width+20
+        self.borderWidth =self.width+20
         self.height = rows * self.unit
         self.borderHeight = self.height+40
-        self.pieceSize = 15*self.ratio
-        self.lineWidth = 2*self.ratio
+        self.pieceSize = 15
+        self.lineWidth = 2
         self.gameMsg = 'Please play the game use your voice'
+        # convert unit to fit piTFT
+        self.convertDisplayScale(onTFT,unit,rows,cols,nToWin,pieceSize)
+        # parameters for Gomoku GUI
         # pygame data members
         pygame.init()
+        pygame.mouse.set_visible(False)
         pygame.display.set_caption("Gomoku")
         self.font = pygame.font.SysFont('arial', self.fontSize)
         self.screen = pygame.display.set_mode((self.borderWidth,self.borderHeight))
@@ -58,29 +70,48 @@ class Gomoku:
         # FSM, state : idle, running, again, exit
         self.state = "idle"
         
-    def convertDisplayScale(self,onTFT):
+    def convertDisplayScale(self,onTFT,unit,rows,cols,nToWin,pieceSize):
         if(onTFT):
-            curUnit = min((self.screenWidth-20)//self.cols, (self.screenHeight-40)//self.rows)
-            self.ratio = curUnit//self.unit 
+            self.ratio = 1
+            self.unit = unit
+            self.screenWidth = 320
+            self.screenHeight = 240
+            curUnit = min((self.screenWidth-20)//cols, (self.screenHeight-40)//rows)
+            self.ratio = curUnit/self.unit 
             self.unit = curUnit
+            # parameters for Gomoku GUI
+            self.fontSize = 12
+            self.halfUnit = self.unit // 2
+            self.rows = rows
+            self.cols = cols
+            self.nToWin = nToWin
+            self.width = int(cols * self.unit)
+            self.borderWidth =self.screenWidth
+            self.height = int(rows * self.unit)
+            self.borderHeight = self.screenHeight
+            self.pieceSize = int(15*self.ratio)
+            self.lineWidth = 1
+            self.gameMsg = 'Please play the game use your voice'
+            
 
 
     def drawLineNumbers(self):
+        numFont =pygame.font.SysFont('arial', 8)
         #draw rows
         for i in range(self.rows):
-            text_surface = self.font.render(str(i), True, Colors.WHITE)
+            text_surface = numFont.render(str(i), True, Colors.WHITE)
             rect = text_surface.get_rect(center=(i*self.unit+self.halfUnit,self.height-5))
             self.screen.blit(text_surface,rect)
         #draw cols
         for j in range(self.cols):
-            text_surface = self.font.render(str(j), True, Colors.WHITE)
+            text_surface = numFont.render(str(j), True, Colors.WHITE)
             rect = text_surface.get_rect(center=(self.width-5,j*self.unit+self.halfUnit))
             self.screen.blit(text_surface,rect)
 
     def hintMsg(self,msg="none"):
         text_surface = self.font.render(msg, True, Colors.RED)
         rect = text_surface.get_rect(center=(self.width//2,self.height+20))
-        pygame.draw.rect(self.screen, Colors.BROWN, pygame.Rect(0,self.height+5,self.width,self.height))
+        pygame.draw.rect(self.screen, Colors.BROWN, pygame.Rect(0,self.height+5,self.borderWidth,self.height))
         self.screen.blit(text_surface,rect)
 
     def drawRowLines(self):
@@ -122,7 +153,7 @@ class Gomoku:
         os.system(f'echo "{userColor}" > {FIFO_PATH}')
 
     def showOutcome(self):
-        print("show outcome of this game")
+        print(f"[{CUR_FILE}] show outcome of this game")
         playerNames = {"w":"White", "b":"Black"}
         player      = playerNames[self.gomokuServer.lastPlayer()]
         text = "draw!" if self.gomokuServer.isDraw() else f"{player} wins!"
@@ -137,7 +168,7 @@ class Gomoku:
         """
         For this function, we only need to listen the again command or exit command
         """
-        print("current game finish, wait for next command")
+        print(f"[{CUR_FILE}] current game finish, wait for next command")
         while True:
             isCMD_Valid, userRow, userCol, newMsg = self.inputHandler.getCommand()
             if self.handleSpecialCMD(newMsg) == "again": return
@@ -184,10 +215,9 @@ class Gomoku:
         self.waitAfterFinish()
 
 if __name__ == "__main__":
+    gpioSetUp()
     while True:
-        game = Gomoku(rows=10, cols=10, nToWin=2)
+        game = Gomoku(rows=10, cols=10, nToWin=5, onTFT=True)
         game.play()
-
-
-
+    gpio.cleanup()
 

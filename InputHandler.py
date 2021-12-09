@@ -1,13 +1,16 @@
 import os
+import sys
 import errno
 import globalParamters as gp
+
+CUR_FILE = __file__.split("/")[-1]
 
 class InputHandler:
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
         self.msg = ''
-        self.operatorList = ["-", "*", "+", "/", "|", "="]
+        self.operatorList = ["-", "*", "+", "/", "|", "=", ":"]
         self.cmdList = []
 
     def inBounds(self, row, col):
@@ -37,33 +40,38 @@ class InputHandler:
 
         # handle normal user inputs
         if(len(self.comList) != 2): 
-            self.msg = "Try again : You need to command with [number]-[number]"
+            self.msg = f"said: {command}, Please say [num]-[num]"
             return False
         if(not self.comList[0].isdigit() or not self.comList[1].isdigit()): 
-            self.msg = "Try again : You need to command with [number]-[number]"
+            self.msg = f"said: {command}, Please say [num]-[num]"
             return False
         row = int(self.comList[0])
         col = int(self.comList[1])
         if(not self.inBounds(row, col)): 
-            print("Try again : The input integers are out of bound")
-            self.msg = "Try again : The input integers are out of bound"
+            print(f"[{CUR_FILE}] Try again : The input integers are out of bound")
+            self.msg = "input out of bound, say again"
             return False
-        self.msg = "Success : you made a move at {}-{}".format(row,col)
+        self.msg = "Success: move at {}-{}".format(row,col)
         print(self.msg)
         return True
 
     def handleFIFO(self, fifo_name):
         command = ""
+        # erase all previous fifo 
+        os.remove(fifo_name)
+
+        # make new fifos
         try:
             os.mkfifo(fifo_name)
         except OSError as oe:
             if oe.errno != errno.EEXIST:
                 raise
+
         # get command from fifo
         with open(fifo_name) as fifo:
             command = fifo.read()
         if command != "" and command[-1] == "\n" : command = command[:-1]
-        print(f"get command from {fifo_name}, command : {command}")
+        print(f"[{CUR_FILE}] get command from {fifo_name}, command : {command}")
         return command
 
     def getLED(self):

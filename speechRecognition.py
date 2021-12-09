@@ -1,4 +1,5 @@
 # Global Python libraries
+import sys
 import time
 import os
 import speech_recognition as sr
@@ -9,6 +10,8 @@ from InputHandler import InputHandler
 # Local Python modules
 from record import RecordAudio
 import globalParamters as gp
+
+CUR_FILE = __file__.split("/")[-1]
 
 # quit btn
 QUIT_BTN = 27
@@ -32,13 +35,13 @@ inputHandler = InputHandler('','')
 # close LED when program exit
 def catchHandler(signum,frame):
     gpio.cleanup()
-    print("gpio cleaned")
+    print(f"[{CUR_FILE}] gpio cleaned")
     exit(1)
 
 # physical callback function for exit
 def GPIO27_callback(channel):
     gpio.cleanup()
-    print('gpio cleaned')
+    print(f'[{CUR_FILE}] gpio cleaned')
     os.system(f'echo "exit" > {gp.FIFO_USERIN}')
     exit(1)
 
@@ -68,17 +71,17 @@ def recognize( audio ):
         # Return None if no response
         try:
             res = rec.recognize_google(audio)
-            print('Found: ' + res)
+            print(f'[{CUR_FILE}] Found: ' + res)
             return res
         except:
-            print('Not found')
+            print(f'[{CUR_FILE}] Not found')
             return 'not found'
 
 def getResult(mic,color='White'):
     if(color not in LED_map):
         color = 'White'
     result  = ""
-    print("Recognizing...")
+    print(f"[{CUR_FILE}] Recognizing...")
     # Indicate start of recording with LED and animation    
     gpio.output(LED_map[color], 1)
     # Record audio 
@@ -88,7 +91,7 @@ def getResult(mic,color='White'):
     # Recognize any speech in the recorded audio, if not found, return None
     result = recognize(mic.save())
     # Delay of 2s before next recognition
-    time.sleep(2)
+    time.sleep(1)
     return result
 
 def main():
@@ -102,9 +105,9 @@ def main():
     mic = RecordAudio()
     while True:
         LED_color = inputHandler.getLED()
-        print(f"Current LED color: {LED_color}")
+        print(f"[{CUR_FILE}] Current LED color: {LED_color}")
         # Record and try recognizing voice userInput until any words detected
-        print("Tell me the position of your piece, format:[number-number]")
+        print(f"[{CUR_FILE}] Tell me the position of your piece, format:[number-number]")
         userInput = getResult(mic,LED_color)
         if userInput:
             # send userInput to fifo
@@ -112,7 +115,7 @@ def main():
             if(userInput in gp.commandMap and gp.commandMap[userInput] == 'exit'):
                 exit(1)
         else: 
-            print("Result: None")
+            print(f"[{CUR_FILE}] Result: None")
         #  time.sleep(0.1)
 
 if __name__ == "__main__":

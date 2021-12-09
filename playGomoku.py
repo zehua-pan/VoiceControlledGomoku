@@ -42,7 +42,7 @@ class Gomoku:
         self.ratio = 1
         self.unit = unit
         # parameters for Gomoku GUI
-        self.fontSize = 5
+        self.fontSize = 20
         self.halfUnit = self.unit // 2
         self.rows = rows
         self.cols = cols
@@ -51,7 +51,7 @@ class Gomoku:
         self.borderWidth =self.width+20
         self.height = rows * self.unit
         self.borderHeight = self.height+40
-        self.pieceSize = 15
+        self.pieceSize = 19
         self.lineWidth = 2
         self.gameMsg = 'Please play the game use your voice'
         # convert unit to fit piTFT
@@ -89,29 +89,29 @@ class Gomoku:
             self.borderWidth =self.screenWidth
             self.height = int(rows * self.unit)
             self.borderHeight = self.screenHeight
-            self.pieceSize = int(15*self.ratio)
+            self.pieceSize = 8
             self.lineWidth = 1
             self.gameMsg = 'Please play the game use your voice'
             
 
 
     def drawLineNumbers(self):
-        numFont =pygame.font.SysFont('arial', 8)
+        numFont =pygame.font.SysFont('arial', self.fontSize)
         #draw rows
         for i in range(self.rows):
             text_surface = numFont.render(str(i), True, Colors.WHITE)
-            rect = text_surface.get_rect(center=(i*self.unit+self.halfUnit,self.height-5))
+            rect = text_surface.get_rect(center=(i*self.unit+self.halfUnit,self.height+2))
             self.screen.blit(text_surface,rect)
         #draw cols
         for j in range(self.cols):
             text_surface = numFont.render(str(j), True, Colors.WHITE)
-            rect = text_surface.get_rect(center=(self.width-5,j*self.unit+self.halfUnit))
+            rect = text_surface.get_rect(center=(self.width+2,j*self.unit+self.halfUnit))
             self.screen.blit(text_surface,rect)
 
     def hintMsg(self,msg="none"):
         text_surface = self.font.render(msg, True, Colors.RED)
-        rect = text_surface.get_rect(center=(self.width//2,self.height+20))
-        pygame.draw.rect(self.screen, Colors.BROWN, pygame.Rect(0,self.height+5,self.borderWidth,self.height))
+        rect = text_surface.get_rect(center=(self.width//2,self.height+25))
+        pygame.draw.rect(self.screen, Colors.BROWN, pygame.Rect(0,self.height+15,self.borderWidth,self.height-5))
         self.screen.blit(text_surface,rect)
 
     def drawRowLines(self):
@@ -217,7 +217,7 @@ class Gomoku:
 if __name__ == "__main__":
     gpioSetUp()
     while True:
-        game = Gomoku(rows=10, cols=10, nToWin=5, onTFT=True)
+        game = Gomoku(rows=10, cols=10, nToWin=5, onTFT=False)
         game.play()
     gpio.cleanup()
 

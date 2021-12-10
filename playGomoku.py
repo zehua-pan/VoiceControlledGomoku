@@ -9,7 +9,7 @@ import os
 import RPi.GPIO as gpio
 # piTFT env
 os.putenv('SDL_VIDEORIVER', 'fbcon')
-os.putenv('SDL_FBDEV', '/dev/fb1')
+os.putenv('SDL_FBDEV', '/dev/fb0')
 CUR_FILE = sys.argv[0].split("/")[-1]
 QUIT_BTN = 23
 
@@ -131,10 +131,18 @@ class Gomoku:
         rect = pygame.Rect(0, 0, self.borderWidth, self.borderHeight)
         pygame.draw.rect(self.screen, Colors.BROWN, rect)
 
+    def drawTitle(self):
+        title = "Gomoku"
+        title_font = pygame.font.SysFont('arial', 25)
+        text_surface = title_font.render(title, True, Colors.RED)
+        rect = text_surface.get_rect(center=(self.width + 55,self.height//2))
+        self.screen.blit(text_surface,rect)
+
     def drawBoard(self):
         self.drawBackground()
         self.drawLines()
         self.drawLineNumbers()
+        self.drawTitle()
         self.hintMsg(self.gameMsg)
 
     def drawPiece(self, row, col):
@@ -217,7 +225,7 @@ class Gomoku:
 if __name__ == "__main__":
     gpioSetUp()
     while True:
-        game = Gomoku(rows=10, cols=10, nToWin=5, onTFT=False)
+        game = Gomoku(rows=10, cols=10, nToWin=5, onTFT=True)
         game.play()
     gpio.cleanup()
 

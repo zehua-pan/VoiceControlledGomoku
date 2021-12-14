@@ -1,3 +1,17 @@
+"""
+ECE 5725 Fall 2021
+Final Project
+
+VoiceControlledGomoku
+Zehua Pan(zp74) and Yuhao Lu(yl3539)
+
+"""
+
+"""
+This class is the "backend" of Gomoku. It is used to store 
+the data of the game and recognize the game result every time 
+players make a move.
+"""
 class GomokuServer:
     # each tuple record (dx, dy), which is 
     dirs = (
@@ -61,37 +75,20 @@ class GomokuServer:
             return True
         return False
 
-    def charForCell(self, row, col):
-        for i, char in enumerate(self.players):
-            if self.boards[i][row][col]:
-                return char
-        return self.blank
-        
-    def toGrid(self):
-        return [
-            [self.charForCell(row, col) for col in range(self.cols)]
-            for row in range(self.rows)
-        ]
-
-    # print game board
-    def __repr__(self):
-        boardGrid = self.toGrid()
-        return "\n".join([" ".join(lineChars) for lineChars in boardGrid])
-
-if __name__ == "__main__":
-    while True:
-        print("\nGame begin : \n")
-        game = GomokuServer(rows=6, cols=6, nToWin=3)
-        while not game.gameOver() and not game.isDraw():
-            print(game, "\n")
-            # "*" operator is used to unbind the iterator or container
-            if not game.move(*map(int, input("[row col] :: ").split())):
-                print("illegal position, try again!")
-
-        print(game, "\n")
-
-        if game.gameOver():
-            print(game.lastPlayer(), " won")
-        else:
-            print("draw")
-
+    #  def charForCell(self, row, col):
+    #      for i, char in enumerate(self.players):
+    #          if self.boards[i][row][col]:
+    #              return char
+    #      return self.blank
+    #
+    #  def toGrid(self):
+    #      return [
+    #          [self.charForCell(row, col) for col in range(self.cols)]
+    #          for row in range(self.rows)
+    #      ]
+    #
+    #  # print game board
+    #  def __repr__(self):
+    #      boardGrid = self.toGrid()
+    #      return "\n".join([" ".join(lineChars) for lineChars in boardGrid])
+    #

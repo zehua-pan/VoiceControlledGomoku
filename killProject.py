@@ -1,3 +1,14 @@
+"""
+ECE 5725 Fall 2021
+Final Project
+
+VoiceControlledGomoku
+Zehua Pan(zp74) and Yuhao Lu(yl3539)
+
+This file is used to kill all related programs in case programs are stuck
+or running in the background implicitly
+"""
+
 import subprocess
 import os
 

@@ -1,16 +1,31 @@
+"""
+ECE 5725 Fall 2021
+Final Project
+
+VoiceControlledGomoku
+Zehua Pan(zp74) and Yuhao Lu(yl3539)
+
+"""
+
 import os
 import sys
 import errno
+from os.path import exists
 import globalParamters as gp
 
+# current file name
 CUR_FILE = __file__.split("/")[-1]
 
+"""
+This class is used to deal with the communication between Gomoku and speechRecognition module.
+Note that sometimes we use command and user input interchangably, but them refer to the same thing
+"""
 class InputHandler:
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
         self.msg = ''
-        self.operatorList = ["-", "*", "+", "/", "|", "=", ":"]
+        self.operatorList = ["-", "*", "+", "/", "|", "=", ":"] # this operatorList is used to handle the ambiguous input or recognizing results
         self.cmdList = []
 
     def inBounds(self, row, col):
@@ -19,6 +34,9 @@ class InputHandler:
     def getCoordinate(self, command):
         return int(self.comList[0]), int(self.comList[1])
 
+    """
+    parse command according to the operator list
+    """
     def commandParse(self, command):
         cmdList = []
         index = 0
@@ -31,6 +49,9 @@ class InputHandler:
             if(cmdList[i] == ""): cmdList.pop(i)
         return cmdList
 
+    """
+    check if the user input is valid
+    """
     def checkCommand(self, command):
         # handle special command, if yes, return directly
         if(command in gp.commandMap):
@@ -55,10 +76,13 @@ class InputHandler:
         print(self.msg)
         return True
 
+    """
+    open a fifo for communicating
+    """
     def handleFIFO(self, fifo_name):
         command = ""
         # erase all previous fifo 
-        os.remove(fifo_name)
+        if(exists(fifo_name)): os.remove(fifo_name)
 
         # make new fifos
         try:

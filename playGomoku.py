@@ -1,3 +1,13 @@
+
+""" 
+ECE 5725 Fall 2021
+Final Project
+
+VoiceControlledGomoku
+Zehua Pan(zp74) and Yuhao Lu(yl3539)
+
+""" 
+
 from itertools import chain
 import sys
 import math
@@ -7,6 +17,11 @@ from InputHandler import InputHandler
 import globalParamters as gp
 import os
 import RPi.GPIO as gpio
+
+########################################
+# global variables and settings
+########################################
+
 # piTFT env
 os.putenv('SDL_VIDEORIVER', 'fbcon')
 os.putenv('SDL_FBDEV', '/dev/fb0')
@@ -23,12 +38,14 @@ def gpioSetUp():
     gpio.add_event_detect(QUIT_BTN,gpio.FALLING,callback=GPIO23_callback,bouncetime=500)
 
 
+"""Color class"""
 class Colors:
     BLACK = 0, 0, 0
     WHITE = 255, 255, 255
     BROWN = 205, 128, 0
     RED   = 81, 24, 111
 
+"""Gomoku class for user interface and communication with speech recognition module"""
 class Gomoku:
     def __init__(
         self,
@@ -70,6 +87,9 @@ class Gomoku:
         # FSM, state : idle, running, again, exit
         self.state = "idle"
         
+    """
+    convert scale if this game is shown on piTFT
+    """
     def convertDisplayScale(self,onTFT,unit,rows,cols,nToWin,pieceSize):
         if(onTFT):
             self.ratio = 1
@@ -93,8 +113,6 @@ class Gomoku:
             self.lineWidth = 1
             self.gameMsg = 'Please play the game use your voice'
             
-
-
     def drawLineNumbers(self):
         numFont =pygame.font.SysFont('arial', self.fontSize)
         #draw rows
@@ -154,6 +172,9 @@ class Gomoku:
             color = Colors.BLACK
         pygame.draw.circle(self.screen, color, (pieceX, pieceY), self.pieceSize)
         
+    """
+    send LED color to speech recognition to light up corresponding LED
+    """
     def sendLEDColors(self):
         FIFO_PATH = gp.FIFO_LED
         # if lastPlayer is white, current player should be black, vice versa
